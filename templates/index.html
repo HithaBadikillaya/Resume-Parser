@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Analyzer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .progress-bar {
+      transition: width 1s ease-in-out;
+    }
+    .file-uploaded {
+      color: green;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+  <div class="max-w-xl w-full bg-white p-6 rounded-lg shadow-md">
+    <h1 class="text-3xl font-bold text-blue-600 text-center">Resume Analyzer</h1>
+    <p class="text-gray-600 text-center mb-4">Upload a PDF and check skill match</p>
+
+    <form action="/process" method="POST" enctype="multipart/form-data" class="space-y-4">
+      <!-- Upload Resume Section -->
+      <label class="block text-gray-700 text-lg font-medium">Upload Your Resume (PDF)</label>
+      <!-- Added 'relative' here so the absolute file input is confined to this div -->
+      <div class="relative flex flex-col items-center justify-center w-full bg-white rounded-xl p-6 border-4 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-blue-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 16V4H8v12H4l8 8 8-8h-4z"></path>
+        </svg>
+        <p class="text-blue-500 text-xl">Click or Drag to Upload</p>
+        <input type="file" name="resume" accept=".pdf" required class="opacity-0 absolute inset-0 w-full h-full cursor-pointer" id="resume-upload" />
+      </div>
+
+      <!-- File Upload Indicator -->
+      <div id="file-indicator" class="hidden mt-2 text-green-500 text-sm">
+        <p><strong>File Uploaded:</strong> <span id="file-name"></span></p>
+      </div>
+
+      <!-- Required Skills Input -->
+      <label class="block text-gray-700 text-lg font-medium mt-4">Required Skills (comma-separated)</label>
+      <input type="text" name="skills_input" value="{{ skills_input }}"
+             class="w-full border rounded-lg p-2 text-sm placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+             placeholder="e.g., Python, Machine Learning, Communication" />
+
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition transform hover:scale-105">
+        Analyze Resume
+      </button>
+    </form>
+
+    {% if data %}
+    <div class="mt-6 p-4 bg-gray-50 rounded-lg shadow">
+      <h2 class="text-xl font-bold text-gray-800 text-center">Analysis Result</h2>
+
+      <div class="mt-4">
+        <p class="font-semibold">Match Score: <span class="text-blue-600">{{ match_percentage }}%</span></p>
+        <div class="w-full bg-gray-200 rounded-full h-4">
+          <div id="progress-bar" class="progress-bar bg-blue-600 h-4 rounded-full" style="width: 0;"></div>
+        </div>
+      </div>
+
+      <div class="mt-4 space-y-2">
+        <h2 class="text-xl font-bold text-gray-800 text-center">Candidate Details</h2>
+        <p><strong>Name:</strong> {{ data.name }}</p>
+        <p><strong>Email:</strong> {{ data.email }}</p>
+        <p><strong>Phone:</strong> {{ data.phone }}</p>
+      </div>
+
+      <div class="mt-4">
+        <p class="font-semibold">Matched Skills:</p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          {% for skill in data.skills %}
+          <span class="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm">{{ skill }}</span>
+          {% else %}
+          <p class="text-gray-500">No skills matched</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      let matchPercentage = Number("{{ match_percentage | default(0) }}");
+      let progressBar = document.getElementById("progress-bar");
+      setTimeout(() => {
+        progressBar.style.width = matchPercentage + "%";
+      }, 300);
+
+      const resumeInput = document.getElementById("resume-upload");
+      const fileIndicator = document.getElementById("file-indicator");
+      const fileNameSpan = document.getElementById("file-name");
+
+      // When a file is selected, show the file name indicator
+      resumeInput.addEventListener("change", function () {
+        const fileName = resumeInput.files[0]?.name;
+        if (fileName) {
+          fileIndicator.classList.remove("hidden");
+          fileNameSpan.textContent = fileName;
+        } else {
+          fileIndicator.classList.add("hidden");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
