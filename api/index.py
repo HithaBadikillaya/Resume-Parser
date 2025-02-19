@@ -2,8 +2,10 @@ from flask import Flask, request, render_template
 import pdfplumber
 import os
 import re
+from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
+# Adjust template_folder because the templates folder is outside the "api" folder.
+app = Flask(__name__, template_folder="../templates")
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -21,7 +23,9 @@ def process_resume():
     skills_input = request.form.get('skills_input', '')
 
     skills_list = [skill.strip() for skill in skills_input.split(',') if skill.strip()]
-    file_path = os.path.join(UPLOAD_FOLDER, uploaded_file.filename)
+    # Use secure_filename for security
+    filename = secure_filename(uploaded_file.filename)
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
     uploaded_file.save(file_path)
 
     text = ""
@@ -51,5 +55,6 @@ def process_resume():
 
     return render_template('index.html', data=parsed_data, skills_input=skills_input, match_percentage=match_percentage)
 
+# When running locally; Vercel will call the app as a serverless function.
 if __name__ == '__main__':
     app.run(debug=True)
